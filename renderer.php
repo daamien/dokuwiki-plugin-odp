@@ -36,6 +36,7 @@ class renderer_plugin_odp extends Doku_Renderer {
     var $in_list_item = false;
     var $in_paragraph = false;
     var $highlight_style_num = 1;
+    var $slideopen = false;
     // Automatic styles. Will always be added to content.xml and styles.xml
     var $autostyles = array(
         "pm1"=>'
@@ -187,6 +188,9 @@ class renderer_plugin_odp extends Doku_Renderer {
             $this->info["cache"] = false;
         }
 
+	//DEBUG
+	$this->info["cache"] = false;
+
         // prepare the zipper
         $this->ZIP = new ZipLib();
 
@@ -333,10 +337,10 @@ class renderer_plugin_odp extends Doku_Renderer {
     function document_end_scratch(){
         $autostyles = $this->_odpAutoStyles();
         $userfields = $this->_odpUserFields();
-
-        // add defaults
+        
+	// add defaults
         $this->ZIP->add_File('application/vnd.oasis.opendocument.presentation', 'mimetype', 0);
-
+	
         $this->_odpMeta();
         $this->_odpSettings();
 
@@ -383,29 +387,11 @@ class renderer_plugin_odp extends Doku_Renderer {
         $value .=       $autostyles;
         $value .=       '<office:body>';
         $value .=           '<office:presentation>';
-//       $value .=               '<office:forms form:automatic-focus="false" form:apply-design-mode="false"/>';
-//        $value .=               '<text:sequence-decls>';
-//        $value .=                   '<text:sequence-decl text:display-outline-level="0" text:name="Illustration"/>';
-//        $value .=                   '<text:sequence-decl text:display-outline-level="0" text:name="Table"/>';
-//        $value .=                   '<text:sequence-decl text:display-outline-level="0" text:name="Text"/>';
-//        $value .=                   '<text:sequence-decl text:display-outline-level="0" text:name="Drawing"/>';
-//        $value .=               '</text:sequence-decls>';
 
-//FIXME LATER
-//        $value .=               $userfields;
-//        $value .=   $this->doc;
+        $value .=               $userfields;
 
-$value .= '<draw:page draw:name="page1" draw:style-name="dp1" draw:master-page-name="Default">';
-$value .= '<presentation:notes draw:style-name="dp2">';
-$value .= '<draw:page-thumbnail draw:style-name="gr1" draw:layer="layout" svg:width="14.848cm" svg:height="11.136cm" svg:x="3.075cm" svg:y="2.257cm" draw:page-number="1" presentation:class="page"/>';
-$value .= '<draw:frame presentation:style-name="pr1" draw:layer="layout" svg:width="16.799cm" svg:height="13.365cm" svg:x="2.1cm" svg:y="14.107cm" presentation:class="notes" presentation:placeholder="true">';
-$value .= '<draw:text-box/>';
-$value .= '</draw:frame>';
-$value .= '</presentation:notes>';
-$value .= '</draw:page>';
-$value .= '<presentation:settings presentation:mouse-visible="false"/>';
-
-
+        $value .=   $this->doc;
+	$value .=   		'</draw:page>';
         $value .=           '</office:presentation>';
         $value .=       '</office:body>';
         $value .=   '</office:document-content>';
@@ -452,7 +438,7 @@ $value .= '<presentation:settings presentation:mouse-visible="false"/>';
             $this->_odpReplaceInFile('/<text:p[^>]*>DOKUWIKI-ODP-INSERT<\/text:p>/', 
                 $this->doc, $this->temp_dir.'/content.xml', true);
         } else { // Append to the template
-            $this->_odpReplaceInFile('</office:text>', $this->doc.'</office:text>', $this->temp_dir.'/content.xml');
+            $this->_odpReplaceInFile('</office:presentation>', $this->doc.'</office:presentation>', $this->temp_dir.'/content.xml');
         }
 
 	 $this->render_TOC();
@@ -515,47 +501,9 @@ $value .= '<presentation:settings presentation:mouse-visible="false"/>';
 
     // Build the table of content
     function render_TOC() { 
-
-	$this->toc='<text:table-of-content text:style-name="Sect1" text:protected="true" text:name="Table of Contents1">';
-	//$this->toc.=$this->toc_source;
-	//$this->toc.=$this->toc_index;
-	$this->toc.='</text:table-of-content>';
-
-        $old_content = io_readFile($this->temp_dir.'/content.xml');
-        if (strpos($old_content, 'DOKUWIKI-ODP-TOC') !== FALSE) {
-            // Replace the mark
-            $this->_odpReplaceInFile('/<text:p[^>]*>DOKUWIKI-ODP-TOC<\/text:p>/',
-            $this->toc, $this->temp_dir.'/content.xml', true);
-        }
-
-	return true; 
     }
 
     function toc_additem($id, $text, $level) {
-	
-	$this->toc_counter+=1;
-
-	$this->toc_source.='<text:table-of-content-entry-template text:outline-level='.$this->toc_counter.' text:style-name="Contents_20_'.$this->toc_counter.'1">';
-	$this->toc_source.='<text:index-entry-link-start text:style-name="Internet_20_link"/>';
-	$this->toc_source.='<text:index-entry-chapter/>';
-	$this->toc_source.='<text:index-entry-text/>';
-	$this->toc_source.='<text:index-entry-link-end/>';
-	$this->toc_source.='<text:index-entry-tab-stop style:type="right" style:leader-char="."/>';
-	$this->toc_source.='<text:index-entry-link-start text:style-name="Internet_20_link"/>';
-	$this->toc_source.='<text:index-entry-page-number/>';
-	$this->toc_source.='<text:index-entry-link-end/>';
-	$this->toc_source.='</text:table-of-content-entry-template>';
-
-	$this->toc_index.='<text:p text:style-name="P7">';
-	$this->toc_index.='<text:a xlink:type="simple" xlink:href="#__RefHeading__39165719" text:style-name="Internet_20_link" text:visited-style-name="Internet_20_link">';
-	$this->toc_index.=$text; 
-	$this->toc_index.='<text:s text:c="2"/>';
-	$this->toc_index.='</text:a>';
-	$this->toc_index.='<text:tab/>';
-	$this->toc_index.='<text:a xlink:type="simple" xlink:href="#__RefHeading__39165719" text:style-name="Internet_20_link" text:visited-style-name="Internet_20_link">';
-	$this->toc_index.='<text:span text:style-name="Internet_20_link">4</text:span>';
-	$this->toc_index.='</text:a>';
-	$this->toc_index.='</text:p>';
     }
 
     function _odpAutoStyles() {
@@ -639,21 +587,41 @@ $value .= '<presentation:settings presentation:mouse-visible="false"/>';
     }
 
     function header($text, $level, $pos){
-        $hid = $this->_headerToLink($text,true);
+	// H1 and H2 create new slides	
+        if($level <3){
+            if($this->slideopen){
+                //close previous slide
+		$this->doc .= '</draw:page>';
+            }
+	    //open the new slide	
+            $this->doc .= '<draw:page draw:name="page1" draw:style-name="dp1" draw:master-page-name="Default">';
+            $this->slideopen = true;
+        }
+        // write the header
+	$this->doc.='<draw:frame presentation:style-name="pr4" draw:layer="layout" svg:width="25.199cm" svg:height="3.256cm" svg:x="1.4cm" svg:y="0.962cm" presentation:class="title">';
+	$this->doc.='<draw:text-box>';
+	$this->doc.='<text:p>';
+	$this->doc.= $this->_xmlEntities($text);
+        $this->doc.='</text:p>';
+	$this->doc.='</draw:text-box>';
+	$this->doc.='</draw:frame>';
 
-	// toc
-        $this->toc_additem($hid, $text, $level);
-
-	// doc
-        $this->doc .= '<text:h text:style-name="Heading_20_'.$level.'" text:outline-level="'.$level.'">';
-        $this->doc .= '<text:bookmark-start text:name="'.$hid.'"/>';
-        $this->doc .= $this->_xmlEntities($text);
-        $this->doc .= '<text:bookmark-end text:name="'.$hid.'"/>';
-        $this->doc .= '</text:h>';
+/*
+        $this->doc .= '<presentation:notes draw:style-name="dp2">';
+        $this->doc .= '<draw:page-thumbnail draw:style-name="gr1" draw:layer="layout" svg:width="14.848cm" svg:height="11.136cm" svg:x="3.075cm" svg:y="2.257cm" draw:page-number="1" presentation:class="page"/>';
+        $this->doc .= '<draw:frame presentation:style-name="pr1" draw:layer="layout" svg:width="16.799cm" svg:height="13.365cm" svg:x="2.1cm" svg:y="14.107cm" presentation:class="notes" presentation:placeholder="true">';
+        $this->doc .= '<draw:text-box/>';
+        $this->doc .= '</draw:frame>';
+        $this->doc .= '</presentation:notes>';
+*/
     }
 
+    /**
+     * A line stops the slide and start the handout section
+     */
     function hr() {
-        $this->doc .= '<text:p text:style-name="Horizontal_20_Line"/>';
+        //$this->doc .= '</div>';
+        //$this->doc .= '<div class="handout">'.DOKU_LF;
     }
 
     function linebreak() {

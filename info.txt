@@ -1,0 +1,8 @@
+# General Plugin Info do not edit
+
+author damien clochard 
+email  damien@taadeem.net
+date   2010-10-01
+name   OpenDocument Presentation Plugin
+desc   Export the current Wiki page to a OpenOffice ODP file
+url    http://www.dokuwiki.org/plugin:odp

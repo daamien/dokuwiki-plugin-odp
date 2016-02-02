@@ -52,7 +52,7 @@ class syntax_plugin_odp extends DokuWiki_Syntax_Plugin {
     /**
      * Handle the match
      */
-    function handle($match, $state, $pos, &$handler){
+    function handle($match, $state, $pos, Doku_Handler $handler){
         // Export button
         if ($match == '~~ODP~~') { return array(); }
         // Extended info
@@ -72,7 +72,7 @@ class syntax_plugin_odp extends DokuWiki_Syntax_Plugin {
     /**
      * Create output
      */
-    function render($format, &$renderer, $data) {
+    function render($format, Doku_Renderer $renderer, $data) {
         global $ID, $REV;
         if (!$data) { // Export button
             if($format != 'xhtml') return false;

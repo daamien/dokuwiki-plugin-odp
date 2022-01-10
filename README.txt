@@ -1,4 +1,6 @@
-====== Dokuwiki ODP plugin ======
+# Dokuwiki ODP plugin 
+
+**IMPORTANT** : As of 2016, this plugin is no longer maintained and may not work with recent versions of Dokuwiki. 
 
 This plugin lets you export wiki pages to ODP, the OpenDocument Presentation format as used by OpenOffice.org
 
